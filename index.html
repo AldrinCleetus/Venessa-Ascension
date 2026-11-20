@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Venessa — See what breaks before you deploy</title>
+  <meta name="description" content="Venessa is a pre-mortem simulator for cloud architectures. Describe your system, attack it with generated failure scenarios, and get a ranked risk map — before you write a single Terraform file." />
+  <meta name="theme-color" content="#0a0e17" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Venessa — See what breaks before you deploy" />
+  <meta property="og:description" content="Pre-deployment failure simulation, powered by an AI adversary and a deterministic discrete-event engine. No staging cluster. No SRE team. No production traffic." />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- ================= NAV ================= -->
+  <header class="site-nav" id="site-nav">
+    <div class="container nav-inner">
+      <a class="brand" href="#top" aria-label="Venessa home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+            <path d="M4 4.5 12 20 20 4.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+        <span class="brand-name">Venessa</span>
+      </a>
+
+      <nav class="nav-links" aria-label="Primary">
+        <a href="#gap">The gap</a>
+        <a href="#how">How it works</a>
+        <a href="#simulation">Simulation</a>
+        <a href="#compare">Compare</a>
+        <a href="#faq">FAQ</a>
+      </nav>
+
+      <div class="nav-actions">
+        <a class="nav-signin" href="#simulation">See a run</a>
+        <a class="btn btn-light btn-sm" href="#start">Get started</a>
+        <button class="burger" id="burger" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+          <span></span><span></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="mobile-menu" id="mobile-menu" hidden>
+      <nav aria-label="Mobile">
+        <a href="#gap"><span>01</span>The gap</a>
+        <a href="#how"><span>02</span>How it works</a>
+        <a href="#simulation"><span>03</span>Simulation</a>
+        <a href="#compare"><span>04</span>Comparison</a>
+        <a href="#faq"><span>05</span>FAQ</a>
+      </nav>
+      <p class="mobile-menu-note">A risk map, not a prophecy.</p>
+    </div>
+  </header>
+
+  <main id="main">
+    <span id="top"></span>
+
+    <!-- ================= HERO ================= -->
+    <section class="hero">
+      <div class="hero-bg" aria-hidden="true">
+        <div class="beams"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="stars"></div>
+
+        <svg class="horizon" viewBox="0 0 1600 940" preserveAspectRatio="xMidYMin slice">
+          <defs>
+            <linearGradient id="arcStroke" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#4f8cff" stop-opacity="0"/>
+              <stop offset="0.22" stop-color="#4f8cff" stop-opacity="0.5"/>
+              <stop offset="0.44" stop-color="#bcd4ff" stop-opacity="0.95"/>
+              <stop offset="0.5" stop-color="#ffffff" stop-opacity="1"/>
+              <stop offset="0.56" stop-color="#bcd4ff" stop-opacity="0.95"/>
+              <stop offset="0.78" stop-color="#4f8cff" stop-opacity="0.5"/>
+              <stop offset="1" stop-color="#4f8cff" stop-opacity="0"/>
+            </linearGradient>
+            <radialGradient id="skyGlow" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#7ea9ff" stop-opacity="0.30"/>
+              <stop offset="0.45" stop-color="#3d6fe0" stop-opacity="0.13"/>
+              <stop offset="1" stop-color="#0a0e17" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="planetFill" cx="0.5" cy="0" r="0.85">
+              <stop offset="0" stop-color="#0e1524" stop-opacity="0.96"/>
+              <stop offset="0.35" stop-color="#0a0e17" stop-opacity="0.9"/>
+              <stop offset="1" stop-color="#0a0e17" stop-opacity="1"/>
+            </radialGradient>
+            <filter id="arcGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="16" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <filter id="arcSoft" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="5"/>
+            </filter>
+          </defs>
+
+          <ellipse cx="800" cy="180" rx="860" ry="330" fill="url(#skyGlow)"/>
+          <circle cx="800" cy="1180" r="1000" fill="url(#planetFill)"/>
+          <circle cx="800" cy="1180" r="1000" fill="none" stroke="url(#arcStroke)" stroke-width="22" opacity="0.28" filter="url(#arcSoft)"/>
+          <circle cx="800" cy="1180" r="1000" fill="none" stroke="url(#arcStroke)" stroke-width="2.4" filter="url(#arcGlow)" class="arc-core"/>
+          <circle cx="800" cy="1180" r="1000" fill="none" stroke="#e8f1ff" stroke-width="0.9" opacity="0.5"/>
+        </svg>
+
+        <div class="hero-grid"></div>
+        <div class="hero-haze"></div>
+      </div>
+
+      <div class="container hero-content">
+        <a class="hero-badge reveal-load" href="#how" style="--d:0ms">
+          <span class="badge-pip"></span>
+          <span>New</span>
+          <em>pre-mortem simulation</em>
+          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 3.5 10.5 8 6 12.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+
+        <h1 class="hero-title">
+          <span class="line reveal-load" style="--d:60ms">See what breaks</span>
+          <span class="line line-grad reveal-load" style="--d:140ms"><i>before</i> you deploy.</span>
+        </h1>
+
+        <p class="hero-sub reveal-load" style="--d:220ms">
+          Venessa turns your architecture into a simulated pre-mortem — retry storms,
+          cold-cache stampedes, cascading timeouts and the recovery that never comes.
+          Deterministic, seed-reproducible, and requiring zero infrastructure.
+        </p>
+
+        <div class="hero-actions reveal-load" style="--d:300ms">
+          <a class="btn btn-light btn-lg" href="#start">
+            Run a pre-mortem
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h9M8.5 3.5 13 8l-4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </a>
+          <a class="btn btn-ghost btn-lg" href="#simulation">Watch a simulation</a>
+        </div>
+
+        <p class="hero-micro reveal-load" style="--d:380ms">
+          <span>No staging cluster</span>
+          <span>No SRE team</span>
+          <span>No production traffic</span>
+        </p>
+      </div>
+
+      <!-- Product mock -->
+      <div class="container hero-product reveal-load" style="--d:460ms">
+        <div class="app-glow" aria-hidden="true"></div>
+
+        <div class="app-mock" role="img" aria-label="Preview of a Venessa pre-mortem report showing a payment gateway failure cascading through an e-commerce architecture">
+          <div class="app-chrome">
+            <span class="chrome-dots"><i></i><i></i><i></i></span>
+            <span class="chrome-url">
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><rect x="3" y="7" width="10" height="7" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2" stroke="currentColor" stroke-width="1.3"/></svg>
+              venessa.app/pre-mortem
+            </span>
+            <span class="chrome-right"><span class="chrome-chip">seed 42</span></span>
+          </div>
+
+          <div class="app-body">
+            <aside class="app-rail">
+              <div class="rail-brand">
+                <span class="rail-mark">V</span>
+                <span>Venessa</span>
+              </div>
+
+              <p class="rail-label">Models</p>
+              <div class="rail-item active">
+                <span class="rail-dot"></span>ecommerce_checkout
+              </div>
+              <div class="rail-item">ai_inference_pipeline</div>
+              <div class="rail-item">saas_analytics</div>
+
+              <p class="rail-label">Scenarios</p>
+              <div class="rail-item active">
+                <span class="rail-dot rail-dot-warn"></span>gateway_outage
+              </div>
+              <div class="rail-item">cache_kill_at_peak</div>
+              <div class="rail-item">flash_sale_surge</div>
+              <div class="rail-item">db_5x_slowdown</div>
+
+              <div class="rail-foot">
+                <span class="rail-status"></span> engine ready
+              </div>
+            </aside>
+
+            <div class="app-center">
+              <div class="app-center-head">
+                <div>
+                  <p class="mono-label">pre-mortem report</p>
+                  <h3>ecommerce_checkout <span class="x">×</span> gateway_outage</h3>
+                </div>
+                <span class="status status-warn">degraded</span>
+              </div>
+
+              <svg class="app-graph" viewBox="0 0 620 234">
+                <g class="g-edges">
+                  <path class="g-edge" d="M40 142 H64" />
+                  <path class="g-edge" d="M150 142 H188" />
+                  <path class="g-edge" d="M292 124 C318 124 322 44 342 44" />
+                  <path class="g-edge" d="M292 142 C318 142 322 118 342 118" />
+                  <path class="g-edge" d="M292 160 C318 160 322 196 342 196" />
+                  <path class="g-edge g-edge-fail" id="heroFailEdge" d="M460 118 H498" />
+                </g>
+
+                <g class="g-node g-users" transform="translate(6,124)">
+                  <circle cx="17" cy="17" r="16" />
+                  <text x="17" y="21" text-anchor="middle">You</text>
+                </g>
+
+                <g class="g-node" transform="translate(64,122)">
+                  <rect width="86" height="40" rx="9" />
+                  <text class="g-title" x="11" y="17">edge_lb</text>
+                  <text class="g-sub" x="11" y="30">2 rep · 2k slots</text>
+                </g>
+
+                <g class="g-node" transform="translate(188,110)">
+                  <rect width="104" height="64" rx="10" />
+                  <text class="g-title" x="11" y="20">checkout_api</text>
+                  <text class="g-sub" x="11" y="35">4 rep · 30 slots</text>
+                  <text class="g-sub" id="heroCheckout" x="11" y="50">p99 42ms</text>
+                </g>
+
+                <g class="g-node" transform="translate(342,22)">
+                  <rect width="118" height="44" rx="9" />
+                  <text class="g-title" x="11" y="18">cart_cache</text>
+                  <text class="g-sub" x="11" y="32">92% warm hit</text>
+                </g>
+
+                <g class="g-node" transform="translate(342,96)">
+                  <rect width="118" height="44" rx="9" />
+                  <text class="g-title" x="11" y="18">payment_adapter</text>
+                  <text class="g-sub" id="heroAdapter" x="11" y="32">pool 40 / 40</text>
+                </g>
+
+                <g class="g-node" transform="translate(342,174)">
+                  <rect width="118" height="44" rx="9" />
+                  <text class="g-title" x="11" y="18">order_db</text>
+                  <text class="g-sub" x="11" y="32">25 conns</text>
+                </g>
+
+                <g class="g-node g-node-ext" id="heroExt" transform="translate(498,96)">
+                  <rect width="100" height="44" rx="9" />
+                  <text class="g-title" x="11" y="18">stripe</text>
+                  <text class="g-sub" id="heroExtSub" x="11" y="32">250ms p50</text>
+                </g>
+              </svg>
+
+              <div class="app-timeline">
+                <div class="timeline-head">
+                  <span class="mono-label">client error rate</span>
+                  <span class="mono-label" id="heroClock">t = 04:26</span>
+                </div>
+                <svg viewBox="0 0 620 86" preserveAspectRatio="none">
+                  <defs>
+                    <linearGradient id="sparkFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stop-color="#f04461" stop-opacity="0.34"/>
+                      <stop offset="100%" stop-color="#f04461" stop-opacity="0"/>
+                    </linearGradient>
+                  </defs>
+                  <line x1="0" y1="66" x2="620" y2="66" class="t-axis"/>
+                  <line x1="0" y1="34" x2="620" y2="34" class="t-axis" stroke-dasharray="4 5"/>
+                  <path class="t-area" d="M0 62 C40 62 72 61 112 60 C158 59 186 58 212 55 C232 52 240 38 252 22 C264 8 278 4 296 6 C316 8 330 16 350 24 C374 33 402 40 448 46 C494 52 540 56 576 58 C594 59 610 60 620 60 L620 76 L0 76 Z"/>
+                  <path class="t-line" id="heroSpark" d="M0 62 C40 62 72 61 112 60 C158 59 186 58 212 55 C232 52 240 38 252 22 C264 8 278 4 296 6 C316 8 330 16 350 24 C374 33 402 40 448 46 C494 52 540 56 576 58 C594 59 610 60 620 60"/>
+                  <line class="t-marker" x1="212" y1="2" x2="212" y2="66"/>
+                  <line class="t-marker t-marker-ok" x1="470" y1="2" x2="470" y2="66"/>
+                  <circle class="t-head" id="heroSparkHead" cx="212" cy="55" r="3"/>
+                </svg>
+                <div class="t-axis-labels"><span>00:00</span><span>05:00</span><span>10:00</span><span>15:00</span><span>20:00</span></div>
+              </div>
+            </div>
+
+            <aside class="app-side">
+              <div class="side-block verdict-block">
+                <p class="mono-label">verdict</p>
+                <div class="verdict-row">
+                  <span class="dot dot-warn" id="heroVerdictDot"></span>
+                  <b id="heroVerdict">Degraded, recovered</b>
+                </div>
+              </div>
+
+              <div class="side-kpis">
+                <div><small>error rate</small><b id="heroErr">0.0%</b></div>
+                <div><small>p99</small><b id="heroP99">1.2s</b></div>
+                <div><small>out of SLO</small><b id="heroBreach">0s</b></div>
+                <div><small>recovery</small><b id="heroRec">—</b></div>
+              </div>
+
+              <div class="side-block">
+                <p class="mono-label">failure story</p>
+                <ul class="mini-cascade">
+                  <li><time>04:12</time><span>payment pool exhausted</span></li>
+                  <li><time>04:18</time><span>retry amplification 2.4×</span></li>
+                  <li><time>04:26</time><span class="bad">SLO breached · 18.3%</span></li>
+                  <li><time>06:04</time><span class="ok">back inside SLO</span></li>
+                </ul>
+              </div>
+
+              <div class="side-block side-fix">
+                <p class="mono-label">top fix</p>
+                <div class="fix-row">
+                  <span class="sev sev-high">high</span>
+                  <span>Exponential backoff + jitter</span>
+                </div>
+                <button class="mini-btn" type="button" tabindex="-1">Apply &amp; re-simulate</button>
+              </div>
+            </aside>
+          </div>
+        </div>
+
+        <div class="product-fade" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <!-- ================= STATS ================= -->
+    <section class="stat-strip">
+      <div class="container stat-grid">
+        <div class="stat" data-reveal>
+          <b data-count="16">16</b>
+          <span>static flaw rules</span>
+        </div>
+        <div class="stat" data-reveal>
+          <b data-count="8">8</b>
+          <span>adversarial scenarios</span>
+        </div>
+        <div class="stat" data-reveal>
+          <b data-count="1">1</b>
+          <span>seed, fully reproducible</span>
+        </div>
+        <div class="stat" data-reveal>
+          <b data-count="0">0</b>
+          <span>infrastructure required</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= THE GAP ================= -->
+    <section class="section" id="gap">
+      <div class="container">
+        <div class="section-head center" data-reveal>
+          <p class="kicker"><span class="pip"></span>The blindspot</p>
+          <h2>Every resilience tool shows up <i>after</i> the fire.</h2>
+          <p class="section-lede">
+            Observability watches production. Chaos engineering injects faults into staging.
+            IaC scanners read Terraform. All of them need something running.
+            By the time you can test resilience, you have already shipped the risk.
+          </p>
+        </div>
+
+        <div class="gap-panel" data-reveal>
+          <div class="gap-row gap-head">
+            <span>What you have</span>
+            <span>What you can use</span>
+          </div>
+          <div class="gap-row">
+            <span>Running production</span>
+            <span>Datadog · Honeycomb · New Relic</span>
+          </div>
+          <div class="gap-row">
+            <span>A deployed staging environment</span>
+            <span>Gremlin · LitmusChaos · AWS FIS · Chaos Mesh</span>
+          </div>
+          <div class="gap-row">
+            <span>Terraform / IaC files</span>
+            <span>Checkov · tfsec · Infracost</span>
+          </div>
+          <div class="gap-row">
+            <span>Provisioned cloud resources</span>
+            <span>Cloud Assist · Well-Architected · Azure Advisor</span>
+          </div>
+          <div class="gap-row gap-you">
+            <span>Just an architecture idea</span>
+            <span><b>Nothing. Until Venessa.</b></span>
+          </div>
+        </div>
+
+        <p class="footnote" data-reveal>
+          Cloud Assist's own documentation is explicit: compliance checks run on
+          <em>already-deployed</em> resources. It answers "what is misconfigured?"
+          It cannot answer "what happens at 3× load with a cold cache when the database goes down?"
+        </p>
+      </div>
+    </section>
+
+    <!-- ================= HOW IT WORKS ================= -->
+    <section class="section section-alt" id="how">
+      <div class="container">
+        <div class="section-head center" data-reveal>
+          <p class="kicker"><span class="pip"></span>How it works</p>
+          <h2>Describe it. Attack it. <i>Decide.</i></h2>
+          <p class="section-lede">
+            A language model handles the intake friction. A deterministic engine handles the physics.
+            You get a report you can argue with — not a dashboard you have to trust.
+          </p>
+        </div>
+
+        <div class="steps">
+          <article class="step" data-reveal>
+            <div class="step-top">
+              <span class="step-num">01</span>
+              <span class="step-line"></span>
+            </div>
+            <h3>Describe the system</h3>
+            <p>
+              Paste a diagram, a paragraph of prose, or your existing YAML. The intake model extracts
+              nodes, replicas, concurrency, timeouts, retries, connection pools and boot dependencies.
+            </p>
+            <div class="step-note">
+              <span class="mono">assumed</span>
+              order_db max_connections = 25
+              <em>— flagged, not hidden</em>
+            </div>
+          </article>
+
+          <article class="step" data-reveal>
+            <div class="step-top">
+              <span class="step-num">02</span>
+              <span class="step-line"></span>
+            </div>
+            <h3>Attack the design</h3>
+            <p>
+              An AI adversary generates failure vectors for your specific topology: the blackholed
+              gateway, the cold cache at peak, the retry storm nobody budgeted for. Every run is pinned
+              to a seed, so a result can be reproduced exactly.
+            </p>
+            <div class="step-note">
+              <span class="mono">generated</span>
+              cache_kill_at_peak · 2.4× amplification
+            </div>
+          </article>
+
+          <article class="step" data-reveal>
+            <div class="step-top">
+              <span class="step-num">03</span>
+              <span class="step-line"></span>
+            </div>
+            <h3>Decide with evidence</h3>
+            <p>
+              Get a ranked risk map: cascade order, blast radius, time outside your SLO, recovery path,
+              and the rupee cost of each failure mode. Apply a fix inside the report and re-simulate
+              to compare it against the baseline.
+            </p>
+            <div class="step-note">
+              <span class="mono">applied</span>
+              backoff → exponential + jitter
+              <em>— p99 4.2s → 0.9s</em>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= SIMULATION ================= -->
+    <section class="section" id="simulation">
+      <div class="container">
+        <div class="section-head center" data-reveal>
+          <p class="kicker"><span class="pip"></span>Inside a run</p>
+          <h2>This is a simulation, <i>not a diagram.</i></h2>
+          <p class="section-lede">
+            Discrete-event simulation, not a flowchart with red arrows. Every request competes for a
+            slot, every retry consumes capacity, every cache miss hits the database. The failure story
+            below is what the engine actually produced.
+          </p>
+        </div>
+
+        <div class="report" data-reveal>
+          <div class="report-main">
+            <div class="report-head">
+              <div>
+                <p class="mono-label">run · ecommerce_checkout × payment_gateway_outage</p>
+                <h3>Gateway blackhole at peak traffic</h3>
+              </div>
+              <span class="status status-warn">degraded · recovered</span>
+            </div>
+
+            <ol class="cascade">
+              <li>
+                <time>04:10</time>
+                <span class="tag tag-bad">kill</span>
+                <p><b>stripe_external_api</b> goes blackhole — TCP accepted, zero bytes returned.</p>
+              </li>
+              <li>
+                <time>04:12</time>
+                <span class="tag tag-warn">saturate</span>
+                <p><b>payment_adapter</b> pool exhausts at 40/40. Queue climbs to 118.</p>
+              </li>
+              <li>
+                <time>04:18</time>
+                <span class="tag tag-warn">amplify</span>
+                <p><b>checkout_api</b> retries at 2,431 req/s — 4× the healthy load. p99 hits 4.2s.</p>
+              </li>
+              <li>
+                <time>04:26</time>
+                <span class="tag tag-bad">breach</span>
+                <p><b>Client error rate 18.3%.</b> SLO (1% / 2.5s) breached for 94 seconds.</p>
+              </li>
+              <li>
+                <time>05:40</time>
+                <span class="tag tag-ok">restore</span>
+                <p><b>stripe</b> recovers. Pool drains in 11s; queues clear without a restart.</p>
+              </li>
+              <li>
+                <time>06:04</time>
+                <span class="tag tag-ok">stable</span>
+                <p><b>Back inside SLO.</b> No metastable state. Estimated exposure: ₹4.8L.</p>
+              </li>
+            </ol>
+          </div>
+
+          <aside class="report-side">
+            <div class="kpi-grid">
+              <div class="kpi"><small>peak error rate</small><b>18.3%</b></div>
+              <div class="kpi"><small>time out of SLO</small><b>94s</b></div>
+              <div class="kpi"><small>p99 latency</small><b>4.2s</b></div>
+              <div class="kpi"><small>failed requests</small><b>42,806</b></div>
+            </div>
+
+            <div class="side-card">
+              <p class="mono-label">blast radius</p>
+              <div class="radius">
+                <span class="r r-1">stripe</span>
+                <span class="r-arrow">→</span>
+                <span class="r r-2">payment_adapter</span>
+                <span class="r-arrow">→</span>
+                <span class="r r-3">checkout_api</span>
+                <span class="r-arrow">→</span>
+                <span class="r r-4">client</span>
+              </div>
+            </div>
+
+            <div class="side-card">
+              <p class="mono-label">targeted fixes · ranked</p>
+              <ul class="fixlist">
+                <li>
+                  <span class="sev sev-high">high</span>
+                  <span>Add exponential backoff + jitter on payment retries</span>
+                </li>
+                <li>
+                  <span class="sev sev-med">medium</span>
+                  <span>Lower gateway timeout from 4s to 1.5s to free pool slots</span>
+                </li>
+                <li>
+                  <span class="sev sev-low">low</span>
+                  <span>Circuit-break the adapter after 3 consecutive timeouts</span>
+                </li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= COMPARISON ================= -->
+    <section class="section section-alt" id="compare">
+      <div class="container">
+        <div class="section-head center" data-reveal>
+          <p class="kicker"><span class="pip"></span>Positioning</p>
+          <h2>The inspection before <i>the ambulance.</i></h2>
+          <p class="section-lede">
+            Venessa is not competing with your observability stack — it fills the window those tools
+            are structurally blind to: the moment when an architecture exists only as a design.
+          </p>
+        </div>
+
+        <div class="table-wrap" data-reveal>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th scope="col"></th>
+                <th scope="col">Cloud Assist</th>
+                <th scope="col">Chaos engineering</th>
+                <th scope="col" class="col-us"><span class="us-tag">Venessa</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <th scope="row">When it runs</th>
+                <td data-label="Cloud Assist">Day 2, post-deploy</td>
+                <td data-label="Chaos engineering">Staging and production</td>
+                <td class="col-us" data-label="Venessa">Day 0, pre-deploy</td>
+              </tr>
+              <tr>
+                <th scope="row">Needs running infra</th>
+                <td data-label="Cloud Assist">Yes</td>
+                <td data-label="Chaos engineering">Yes — agents or IAM roles</td>
+                <td class="col-us" data-label="Venessa">No — a description is enough</td>
+              </tr>
+              <tr>
+                <th scope="row">Failure simulation</th>
+                <td data-label="Cloud Assist">None</td>
+                <td data-label="Chaos engineering">Injects real faults</td>
+                <td class="col-us" data-label="Venessa">Models the cascade deterministically</td>
+              </tr>
+              <tr>
+                <th scope="row">Cloud-agnostic</th>
+                <td data-label="Cloud Assist">GCP only</td>
+                <td data-label="Chaos engineering">K8s-centric or cloud-locked</td>
+                <td class="col-us" data-label="Venessa">Yes</td>
+              </tr>
+              <tr>
+                <th scope="row">Startup-accessible</th>
+                <td data-label="Cloud Assist">Enterprise add-on</td>
+                <td data-label="Chaos engineering">Needs DevOps hours</td>
+                <td class="col-us" data-label="Venessa">Describe → report, in minutes</td>
+              </tr>
+              <tr>
+                <th scope="row">Cost of a miss</th>
+                <td data-label="Cloud Assist">Production outage</td>
+                <td data-label="Chaos engineering">Staging blast radius</td>
+                <td class="col-us" data-label="Venessa">Free — it is a simulation</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PRINCIPLES ================= -->
+    <section class="section" id="principles">
+      <div class="container">
+        <div class="section-head center" data-reveal>
+          <p class="kicker"><span class="pip"></span>Our one honest constraint</p>
+          <h2>A risk map, <i>not a prophecy.</i></h2>
+          <p class="section-lede">
+            A model is not reality. Venessa will never tell you "you will be fine."
+            It tells you what failure modes it found, what it assumed to find them, and how
+            confident it is. That restraint is the product.
+          </p>
+        </div>
+
+        <div class="principles">
+          <article class="principle" data-reveal>
+            <div class="p-mark">01</div>
+            <h3>Assumptions on the record</h3>
+            <p>
+              Every report lists what the intake inferred. "We assumed your database caps at 25
+              connections — if that is wrong, these numbers move." A wrong input is visible before
+              it becomes a wrong decision.
+            </p>
+          </article>
+          <article class="principle" data-reveal>
+            <div class="p-mark">02</div>
+            <h3>Coverage over certainty</h3>
+            <p>
+              We do not claim to predict your outage. We surface failure modes you had not
+              considered, ranked by severity and likelihood. The value is the surprise, not the
+              score.
+            </p>
+          </article>
+          <article class="principle" data-reveal>
+            <div class="p-mark">03</div>
+            <h3>Anchored to real incidents</h3>
+            <p>
+              Cascade patterns map to known outages, so the reasoning is traceable to events you
+              can read about — not to a model's opinion of your architecture.
+            </p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FEATURES ================= -->
+    <section class="section section-alt" id="features">
+      <div class="container">
+        <div class="section-head center" data-reveal>
+          <p class="kicker"><span class="pip"></span>In the engine</p>
+          <h2>The failure modes that actually <i>cost money.</i></h2>
+          <p class="section-lede">
+            SimPy discrete-event physics, not a checklist. These are the behaviours the engine models
+            request by request, slot by slot.
+          </p>
+        </div>
+
+        <div class="features">
+          <article class="feature" data-reveal>
+            <div class="f-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/></svg>
+            </div>
+            <h3>Retry storm physics</h3>
+            <p>Fixed vs exponential backoff, jitter, and amplification across hops. A retry is not free — it consumes a slot.</p>
+          </article>
+          <article class="feature" data-reveal>
+            <div class="f-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5Z"/></svg>
+            </div>
+            <h3>Cold-cache stampede</h3>
+            <p>Warm and cold hit rates, warmup windows, and what happens when the cache dies at the worst possible second.</p>
+          </article>
+          <article class="feature" data-reveal>
+            <div class="f-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="5" rx="1.5"/><rect x="3" y="13" width="18" height="7" rx="1.5"/><path d="M7 6.5h.01M7 16.5h.01"/></svg>
+            </div>
+            <h3>Pool &amp; queue exhaustion</h3>
+            <p>Bounded concurrency, queued work, timeouts that free slots too late, and backpressure that never arrives.</p>
+          </article>
+          <article class="feature" data-reveal>
+            <div class="f-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.8 2.8M16.2 16.2 19 19M19 5l-2.8 2.8M7.8 16.2 5 19"/></svg>
+            </div>
+            <h3>Boot dependency cycles</h3>
+            <p>Restarts blocked by services that are not up yet. The failure that survives every dashboard because nothing is "broken".</p>
+          </article>
+          <article class="feature" data-reveal>
+            <div class="f-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 6H15.5M8.5 7.5C13 9 16 13 18 15.5"/></svg>
+            </div>
+            <h3>Blast radius &amp; recovery</h3>
+            <p>Cascade order, time outside SLO, metastable states, and whether recovery actually happens or only appears to.</p>
+          </article>
+          <article class="feature" data-reveal>
+            <div class="f-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h9l4 4v12H6z"/><path d="M15 4v4h4M9 12h7M9 16h5"/></svg>
+            </div>
+            <h3>Rupee impact per mode</h3>
+            <p>Failed requests priced against order value and traffic — so the fix gets prioritised by loss avoided, not by severity label.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FAQ ================= -->
+    <section class="section" id="faq">
+      <div class="container narrow">
+        <div class="section-head center" data-reveal>
+          <p class="kicker"><span class="pip"></span>Questions</p>
+          <h2>The ones that <i>matter.</i></h2>
+        </div>
+
+        <div class="faq" data-reveal>
+          <details>
+            <summary>Do I need to deploy anything to use Venessa?<span class="plus"></span></summary>
+            <p>No. Venessa works from an architecture description, a diagram, or YAML. There is no agent to install, no IAM role to grant, and no staging cluster to keep alive. That is the entire point.</p>
+          </details>
+          <details>
+            <summary>Is this just chaos engineering?<span class="plus"></span></summary>
+            <p>No. Chaos engineering injects real faults into a real system, which means the system must already exist. Even "shift-left" chaos means shift left of production, not left of deployment. Venessa simulates the fault before infrastructure exists.</p>
+          </details>
+          <details>
+            <summary>How accurate is the simulation?<span class="plus"></span></summary>
+            <p>Accurate as a model, not as a prophecy. It is deterministic and reproducible given the same inputs and seed, and it captures queueing, retries and cascades that static analysis misses. It does not know your packet loss, your kernel version, or the failure mode nobody has imagined yet. Treat the output as a ranked risk map.</p>
+          </details>
+          <details>
+            <summary>Which clouds do you support?<span class="plus"></span></summary>
+            <p>Any of them. The engine models services, caches, datastores, load balancers and external APIs — not provider-specific resource types. The hosted service runs on Cloud Run in <span class="mono">asia-south1</span> (Mumbai) for Indian data-residency requirements.</p>
+          </details>
+          <details>
+            <summary>Can I bring my own architecture?<span class="plus"></span></summary>
+            <p>Yes. Describe it in plain English, upload YAML or JSON, or start from one of the bundled models (e-commerce checkout, AI inference pipeline, SaaS analytics). You can edit the model and re-simulate without leaving the report.</p>
+          </details>
+          <details>
+            <summary>Where does my architecture data go?<span class="plus"></span></summary>
+            <p>For teams with strict data controls, the simulation engine is self-hostable inside your own VPC. Nothing about the physics requires your architecture to leave your network.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= CTA ================= -->
+    <section class="cta-section" id="start">
+      <div class="container">
+        <div class="cta-card" data-reveal>
+          <div class="cta-bg" aria-hidden="true">
+            <div class="cta-orb"></div>
+            <div class="cta-grid"></div>
+          </div>
+          <p class="kicker"><span class="pip"></span>Day 0</p>
+          <h2>Your next outage is already <i>in the design.</i></h2>
+          <p>
+            Run the pre-mortem before it runs you. Bring an architecture, pick an attack,
+            and get a ranked list of what breaks — in minutes, with nothing deployed.
+          </p>
+          <div class="cta-actions">
+            <a class="btn btn-light btn-lg" href="#top">
+              Run a pre-mortem
+              <svg width="15" height="15" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h9M8.5 3.5 13 8l-4.5 4.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <a class="btn btn-ghost btn-lg" href="#how">Read how it works</a>
+          </div>
+          <p class="cta-micro">Free while in preview · No credit card · No infrastructure</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <a class="brand" href="#top" aria-label="Venessa home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+              <path d="M4 4.5 12 20 20 4.5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+          <span class="brand-name">Venessa</span>
+        </a>
+        <p>Pre-deployment failure simulation for teams that have not been burned yet.</p>
+      </div>
+
+      <div class="footer-cols">
+        <div class="footer-col">
+          <h4>Product</h4>
+          <a href="#how">How it works</a>
+          <a href="#simulation">Simulation</a>
+          <a href="#features">Engine</a>
+          <a href="#compare">Comparison</a>
+        </div>
+        <div class="footer-col">
+          <h4>Resources</h4>
+          <a href="#faq">FAQ</a>
+          <a href="#principles">Our approach</a>
+          <span class="soon">API docs · soon</span>
+          <span class="soon">Incident library · soon</span>
+        </div>
+        <div class="footer-col">
+          <h4>Company</h4>
+          <span class="soon">Careers · soon</span>
+          <span class="soon">Contact · soon</span>
+          <a href="#top">Back to top</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <p>© <span id="year">2026</span> Project Venessa. Built in Kochi for the Google Startup Buildathon India 2026.</p>
+      <p class="footer-note">A risk map, not a prophecy.</p>
+    </div>
+  </footer>
+
+  <script src="main.js" defer></script>
+</body>
+</html>
